@@ -10,6 +10,7 @@ on:
 
 jobs:
   test:
+    name: Flask Automated Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -28,4 +29,24 @@ jobs:
           pip install pytest
 
       - name: Run tests
-        run:  python -m pytest -v
+        run: python -m pytest -v
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ClinicPulse image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: clinicpulse:${{ github.sha }}
