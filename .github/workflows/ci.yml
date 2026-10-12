@@ -32,7 +32,7 @@ jobs:
         run: python -m pytest -v
 
   docker-build:
-    name: Build Docker Image
+    name: Build and Test Docker Image
     runs-on: ubuntu-latest
     needs: test
 
@@ -49,4 +49,33 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: clinicpulse:${{ github.sha }}
+          load: true
+          tags: clinicpulse:ci
+
+      - name: Start ClinicPulse container
+        run: |
+          docker run -d \
+            --name clinicpulse-test \
+            -p 127.0.0.1:8000:8000 \
+            clinicpulse:ci
+
+      - name: Verify application health
+        run: |
+          for attempt in {1..15}; do
+            if curl --fail --silent http://127.0.0.1:8000/health; then
+              echo ""
+              echo "ClinicPulse smoke test PASSED"
+              exit 0
+            fi
+
+            echo "Waiting for ClinicPulse to start..."
+            sleep 2
+          done
+
+          echo "ClinicPulse smoke test FAILED"
+          docker logs clinicpulse-test
+          exit 1
+
+      - name: Clean up container
+        if: always()
+        run: docker rm -f clinicpulse-test || true
