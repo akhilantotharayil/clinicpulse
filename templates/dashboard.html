@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinicPulse | Healthcare Monitoring</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #17365d;
+        }
+
+        .subtitle {
+            color: #64748b;
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 250px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .status {
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .up {
+            color: #16a34a;
+        }
+
+        .down {
+            color: #dc2626;
+        }
+
+        .response-time {
+            color: #475569;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>ClinicPulse</h1>
+    <p class="subtitle">Healthcare Reliability & Monitoring Dashboard</p>
+
+    <div class="dashboard" id="dashboard">
+        Loading service status...
+    </div>
+
+    <script>
+        async function loadServices() {
+            const dashboard = document.getElementById("dashboard");
+
+            try {
+                const response = await fetch("/api/status");
+
+                if (!response.ok) {
+                    throw new Error("Monitoring API unavailable");
+                }
+
+                const services = await response.json();
+
+                dashboard.innerHTML = services.map(service => `
+                    <div class="card">
+                        <h3>${service.service}</h3>
+
+                        <p class="status ${service.status === "UP" ? "up" : "down"}">
+                            ${service.status === "UP" ? "● UP" : "● DOWN"}
+                        </p>
+
+                        <p class="response-time">
+                            Response Time:
+                            ${service.response_time_ms ?? "N/A"} ms
+                        </p>
+                    </div>
+                `).join("");
+
+            } catch (error) {
+                dashboard.textContent = "Unable to load monitoring data.";
+            }
+        }
+
+        loadServices();
+
+        setInterval(loadServices, 10000);
+    </script>
+
+</body>
+</html>
