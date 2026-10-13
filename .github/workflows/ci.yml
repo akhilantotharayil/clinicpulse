@@ -213,11 +213,25 @@ jobs:
 
       - name: Create Elastic Beanstalk application version
         run: |
-          aws elasticbeanstalk create-application-version \
+          VERSION="clinicpulse-${{ github.sha }}"
+
+          EXISTING_VERSION=$(aws elasticbeanstalk describe-application-versions \
             --application-name clinicpulse \
-            --version-label "clinicpulse-${{ github.sha }}" \
-            --source-bundle S3Bucket=elasticbeanstalk-us-east-1-216325673272,S3Key=clinicpulse-deployments/${{ github.sha }}.zip \
-            --region us-east-1
+            --version-labels "$VERSION" \
+            --query 'ApplicationVersions[0].VersionLabel' \
+            --output text \
+            --region us-east-1)
+
+          if [ "$EXISTING_VERSION" = "$VERSION" ]; then
+            echo "Application version already exists: $VERSION"
+            echo "Reusing existing version."
+          else
+            aws elasticbeanstalk create-application-version \
+              --application-name clinicpulse \
+              --version-label "$VERSION" \
+              --source-bundle S3Bucket=elasticbeanstalk-us-east-1-216325673272,S3Key=clinicpulse-deployments/${{ github.sha }}.zip \
+              --region us-east-1
+          fi
 
       - name: Deploy to Elastic Beanstalk
         run: |
