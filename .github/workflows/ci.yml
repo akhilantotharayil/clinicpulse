@@ -1,4 +1,4 @@
-name: ClinicPulse CI
+name: ClinicPulse CI/CD
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -120,3 +123,90 @@ jobs:
 
           docker push akhilanto/clinicpulse:${{ github.sha }}
           docker push akhilanto/clinicpulse:latest
+
+  deploy-to-aws:
+    name: Deploy to AWS Elastic Beanstalk
+    runs-on: ubuntu-latest
+    needs: docker-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Create Elastic Beanstalk deployment package
+        run: |
+          mkdir -p deployment
+
+          cat > deployment/Dockerrun.aws.json <<'DOCKER_EOF'
+          {
+            "AWSEBDockerrunVersion": "1",
+            "Image": {
+              "Name": "akhilanto/clinicpulse:${{ github.sha }}"
+            },
+            "Ports": [
+              {
+                "ContainerPort": "8000"
+              }
+            ]
+          }
+          DOCKER_EOF
+
+          cd deployment
+          zip -q ../clinicpulse-deploy.zip Dockerrun.aws.json
+
+      - name: Upload deployment package to S3
+        run: |
+          aws s3 cp clinicpulse-deploy.zip \
+            s3://elasticbeanstalk-us-east-1-216325673272/clinicpulse-deployments/${{ github.sha }}.zip
+
+      - name: Create Elastic Beanstalk application version
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name clinicpulse \
+            --version-label "clinicpulse-${{ github.sha }}" \
+            --source-bundle S3Bucket=elasticbeanstalk-us-east-1-216325673272,S3Key=clinicpulse-deployments/${{ github.sha }}.zip \
+            --region us-east-1
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name clinicpulse-blue \
+            --version-label "clinicpulse-${{ github.sha }}" \
+            --region us-east-1
+
+      - name: Wait for deployment
+        run: |
+          aws elasticbeanstalk wait environment-updated \
+            --environment-names clinicpulse-blue \
+            --region us-east-1
+
+      - name: Verify deployment
+        run: |
+          set -euo pipefail
+
+          EXPECTED_VERSION="clinicpulse-${{ github.sha }}"
+
+          read -r STATUS HEALTH VERSION <<< "$(aws elasticbeanstalk describe-environments \
+            --environment-names clinicpulse-blue \
+            --query 'Environments[0].[Status,Health,VersionLabel]' \
+            --output text \
+            --region us-east-1)"
+
+          echo "Environment status: $STATUS"
+          echo "Environment health: $HEALTH"
+          echo "Deployed version: $VERSION"
+
+          if [ "$STATUS" != "Ready" ] || [ "$HEALTH" != "Green" ] || [ "$VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "Deployment verification failed"
+            exit 1
+          fi
+
+          echo "ClinicPulse deployment verified successfully"
