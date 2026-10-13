@@ -137,7 +137,7 @@ jobs:
     steps:
       - name: Verify AWS role configuration
         env:
-          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
           if [ -z "$AWS_ROLE_ARN" ]; then
             echo "ERROR: AWS_ROLE_ARN is empty or unavailable"
@@ -148,7 +148,7 @@ jobs:
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Create Elastic Beanstalk deployment package
