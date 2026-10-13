@@ -1,10 +1,22 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from app.monitor import check_services
 import time
+import os
+import hmac
 
 app = Flask(__name__, template_folder="../templates")
 
 pharmacy_failure = False
+
+def simulation_authorized():
+    expected_token = os.environ.get("SIMULATION_TOKEN")
+    provided_token = request.headers.get("X-Simulation-Token", "")
+
+    if not expected_token:
+        return False
+
+    return hmac.compare_digest(provided_token, expected_token)
+
 
 @app.route("/")
 def home():
@@ -58,9 +70,14 @@ def laboratory():
 def service_status():
     return jsonify(check_services())
 
+
 @app.route("/simulate/pharmacy/down", methods=["POST"])
 def simulate_pharmacy_down():
     global pharmacy_failure
+
+    if not simulation_authorized():
+        return jsonify({"error": "Forbidden"}), 403
+
     pharmacy_failure = True
 
     return jsonify({
@@ -71,6 +88,10 @@ def simulate_pharmacy_down():
 @app.route("/simulate/pharmacy/up", methods=["POST"])
 def simulate_pharmacy_up():
     global pharmacy_failure
+
+    if not simulation_authorized():
+        return jsonify({"error": "Forbidden"}), 403
+
     pharmacy_failure = False
 
     return jsonify({

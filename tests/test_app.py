@@ -41,24 +41,72 @@ def test_laboratory_service():
     assert response.get_json()["status"] == "UP"
 
 
-def test_pharmacy_failure_and_recovery():
+def test_pharmacy_failure_and_recovery(monkeypatch):
     client = app.test_client()
 
+    monkeypatch.setenv("SIMULATION_TOKEN", "test-secret-token")
+
+    headers = {
+        "X-Simulation-Token": "test-secret-token"
+    }
+
     try:
-        # Simulate pharmacy failure
-        response = client.post("/simulate/pharmacy/down")
+        response = client.post(
+            "/simulate/pharmacy/down",
+            headers=headers
+        )
+
         assert response.status_code == 200
 
-        # Verify pharmacy is unavailable
         response = client.get("/services/pharmacy")
+
         assert response.status_code == 503
         assert response.get_json()["status"] == "DOWN"
 
     finally:
-        # Always restore pharmacy, even if an assertion fails
-        client.post("/simulate/pharmacy/up")
+        response = client.post(
+            "/simulate/pharmacy/up",
+            headers=headers
+        )
+        assert response.status_code == 200
 
-    # Verify recovery
     response = client.get("/services/pharmacy")
+
     assert response.status_code == 200
     assert response.get_json()["status"] == "UP"
+
+
+def test_simulation_rejects_wrong_token(monkeypatch):
+    client = app.test_client()
+
+    monkeypatch.setenv("SIMULATION_TOKEN", "test-secret-token")
+
+    response = client.post(
+        "/simulate/pharmacy/down",
+        headers={"X-Simulation-Token": "wrong-token"}
+    )
+
+    assert response.status_code == 403
+
+
+def test_simulation_rejects_missing_token(monkeypatch):
+    client = app.test_client()
+
+    monkeypatch.setenv("SIMULATION_TOKEN", "test-secret-token")
+
+    response = client.post("/simulate/pharmacy/down")
+
+    assert response.status_code == 403
+
+
+def test_simulation_rejects_unconfigured_token(monkeypatch):
+    client = app.test_client()
+
+    monkeypatch.delenv("SIMULATION_TOKEN", raising=False)
+
+    response = client.post(
+        "/simulate/pharmacy/down",
+        headers={"X-Simulation-Token": "any-token"}
+    )
+
+    assert response.status_code == 403
