@@ -135,6 +135,16 @@ jobs:
       id-token: write
 
     steps:
+      - name: Verify AWS role configuration
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: |
+          if [ -z "$AWS_ROLE_ARN" ]; then
+            echo "ERROR: AWS_ROLE_ARN is empty or unavailable"
+            exit 1
+          fi
+          echo "AWS_ROLE_ARN is available"
+
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
