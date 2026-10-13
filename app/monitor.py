@@ -1,8 +1,9 @@
 import requests
 import time
 import os
+import boto3
 
-BASE_URL = os.getenv("MONITOR_BASE_URL", "http://127.0.0.1:5000")
+BASE_URL = os.getenv("MONITOR_BASE_URL", "http://127.0.0.1:8000")
 
 SERVICES = {
     "Appointment Service": f"{BASE_URL}/services/appointments",
@@ -37,3 +38,52 @@ def check_services():
         })
 
     return results
+
+def publish_cloudwatch_metrics():
+    cloudwatch = boto3.client("cloudwatch", region_name="us-east-1")
+
+    results = check_services()
+
+    metric_data = []
+
+    for result in results:
+        service_name = result["service"]
+        status = result["status"]
+
+        health_value = 1 if status == "UP" else 0
+
+        metric_data.append({
+            "MetricName": "ServiceHealth",
+            "Dimensions": [
+                {
+                    "Name": "Service",
+                    "Value": service_name
+                },
+                {
+                    "Name": "Environment",
+                    "Value": "clinicpulse-blue"
+                }
+            ],
+            "Value": health_value,
+            "Unit": "Count"
+        })
+
+        print(f"{service_name}: {status} → CloudWatch value: {health_value}")
+
+    cloudwatch.put_metric_data(
+        Namespace="ClinicPulse",
+        MetricData=metric_data
+    )
+
+    print("CloudWatch metrics published successfully")
+
+if __name__ == "__main__":
+    print("ClinicPulse CloudWatch monitor started")
+
+    while True:
+        try:
+            publish_cloudwatch_metrics()
+        except Exception as error:
+            print(f"CloudWatch monitoring error: {error}", flush=True)
+
+        time.sleep(60)
