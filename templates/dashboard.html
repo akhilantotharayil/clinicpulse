@@ -1,106 +1,816 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClinicPulse | Healthcare Monitoring</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClinicPulse | Reliability Command Center</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
-            margin: 0;
-            padding: 30px;
-        }
+<style>
+:root {
+    --bg: #080e1c;
+    --sidebar: #0d1526;
+    --surface: #111c30;
+    --surface-2: #16243b;
+    --border: #263650;
+    --text: #edf3ff;
+    --muted: #91a3bf;
+    --green: #34d399;
+    --red: #fb7185;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+}
 
-        h1 {
-            color: #17365d;
-        }
+* { box-sizing: border-box; }
 
-        .subtitle {
-            color: #64748b;
-        }
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
-        .dashboard {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 30px;
-        }
+.layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    min-height: 100vh;
+}
 
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            width: 250px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
+.sidebar {
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    padding: 28px 20px;
+}
 
-        .status {
-            font-weight: bold;
-            font-size: 20px;
-        }
+.brand {
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: -.7px;
+}
 
-        .up {
-            color: #16a34a;
-        }
+.brand span { color: var(--green); }
 
-        .down {
-            color: #dc2626;
-        }
+.brand-subtitle {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 8px;
+    letter-spacing: 1.5px;
+}
 
-        .response-time {
-            color: #475569;
-        }
-    </style>
+.nav-title {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    margin: 48px 12px 16px;
+}
+
+.nav-item {
+    padding: 13px 15px;
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.nav-item.active {
+    background: #1a3151;
+    color: var(--blue);
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    margin-top: 70px;
+    padding: 15px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+}
+
+.sidebar-footer strong { color: var(--green); }
+
+.main {
+    padding: 32px;
+    min-width: 0;
+    max-width: 1600px;
+    width: 100%;
+    margin: auto;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.eyebrow {
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+h1 {
+    font-size: 30px;
+    margin: 10px 0;
+    letter-spacing: -.8px;
+}
+
+.subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.live-badge {
+    background: #103c32;
+    color: var(--green);
+    border: 1px solid #1f6b54;
+    border-radius: 30px;
+    padding: 11px 17px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 32px;
+}
+
+.metric-card, .panel, .service-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+}
+
+.metric-card {
+    padding: 22px;
+}
+
+.metric-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.metric-value {
+    font-size: 32px;
+    font-weight: 800;
+    margin-top: 14px;
+}
+
+.metric-caption {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 9px;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 36px;
+    margin-bottom: 18px;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-size: 19px;
+}
+
+.section-note {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.services {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.service-card {
+    padding: 23px;
+    transition: border-color .2s;
+}
+
+.service-card:hover { border-color: var(--blue); }
+
+.service-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.service-name {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.status-pill {
+    border-radius: 20px;
+    padding: 6px 11px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.status-pill.up {
+    color: var(--green);
+    background: #103c32;
+}
+
+.status-pill.down {
+    color: var(--red);
+    background: #481c2d;
+}
+
+.service-detail {
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+    padding-top: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.service-detail strong {
+    color: var(--text);
+    font-size: 17px;
+}
+
+.workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.panel {
+    padding: 25px;
+    min-width: 0;
+}
+
+.panel h2 {
+    font-size: 18px;
+    margin: 0 0 12px;
+}
+
+.panel p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.control-group {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+button {
+    border: none;
+    padding: 14px 17px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: opacity .2s;
+}
+
+button:hover { opacity: .85; }
+button:disabled { opacity: .45; cursor: wait; }
+
+.btn-danger {
+    background: #542135;
+    color: #ff9bac;
+    border: 1px solid #87364e;
+}
+
+.btn-ai {
+    background: linear-gradient(110deg, #2563eb, #7c3aed);
+    color: white;
+}
+
+.btn-success {
+    background: #103c32;
+    color: var(--green);
+    border: 1px solid #1f6b54;
+}
+
+.action-message {
+    min-height: 22px;
+    margin-top: 20px;
+    color: var(--blue);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.ai-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ai-tag {
+    color: var(--purple);
+    background: #2c214c;
+    border-radius: 20px;
+    padding: 7px 11px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.report-state {
+    color: var(--muted);
+    font-size: 12px;
+    margin: 18px 0;
+}
+
+.report {
+    background: #0b1425;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 260px;
+    max-height: 620px;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+    line-height: 1.8;
+    font-size: 13px;
+    color: #d5e2f7;
+}
+
+.report h3 {
+    color: var(--blue);
+    font-size: 15px;
+    margin-top: 22px;
+}
+
+.report strong { color: white; }
+
+.report ul, .report ol { padding-left: 22px; }
+
+.report li { margin-bottom: 8px; }
+
+.report pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: inherit;
+}
+
+.footer {
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+    margin: 40px 0 12px;
+}
+
+@media (max-width: 1100px) {
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .services { grid-template-columns: 1fr; }
+    .workspace { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { padding: 18px; }
+    .nav-title, .nav-item, .sidebar-footer { display: none; }
+    .main { padding: 20px; }
+    .summary { gap: 10px; }
+    .metric-card { padding: 16px; }
+    .metric-value { font-size: 25px; }
+    h1 { font-size: 25px; }
+}
+</style>
 </head>
 
 <body>
 
-    <h1 style="text-align: center;">ClinicPulse</h1>
-    <p class="subtitle">Healthcare Reliability & Monitoring Dashboard</p>
+<div class="layout">
 
-    <div class="dashboard" id="dashboard">
-        Loading service status...
-    </div>
+    <aside class="sidebar">
+        <div class="brand">Clinic<span>Pulse</span></div>
+        <div class="brand-subtitle">RELIABILITY PLATFORM</div>
 
-    <script>
-        async function loadServices() {
-            const dashboard = document.getElementById("dashboard");
+        <div class="nav-title">OPERATIONS</div>
+        <div class="nav-item active">◈ &nbsp; Overview</div>
+        <div class="nav-item">◉ &nbsp; Service Health</div>
+        <div class="nav-item">⚡ &nbsp; Incident Control</div>
+        <div class="nav-item">✦ &nbsp; AI Investigator</div>
 
-            try {
-                const response = await fetch("/api/status");
+        <div class="sidebar-footer">
+            <strong>● MONITORING ACTIVE</strong><br>
+            Cloud Platform: AWS<br>
+            AI Engine: Amazon Bedrock<br>
+            Refresh Interval: 10s
+        </div>
+    </aside>
 
-                if (!response.ok) {
-                    throw new Error("Monitoring API unavailable");
-                }
+    <main class="main">
 
-                const services = await response.json();
+        <div class="topbar">
+            <div>
+                <div class="eyebrow">OPERATIONS / OVERVIEW</div>
+                <h1>Reliability Command Center</h1>
+                <div class="subtitle">
+                    Real-time healthcare service monitoring and AI-assisted incident investigation.
+                </div>
+            </div>
+            <div class="live-badge" id="live-badge">● CONNECTING</div>
+        </div>
 
-                dashboard.innerHTML = services.map(service => `
-                    <div class="card">
-                        <h3>${service.service}</h3>
+        <section class="summary">
+            <div class="metric-card">
+                <div class="metric-label">TOTAL SERVICES</div>
+                <div class="metric-value" id="total-services">—</div>
+                <div class="metric-caption">Monitored endpoints</div>
+            </div>
 
-                        <p class="status ${service.status === "UP" ? "up" : "down"}">
-                            ${service.status === "UP" ? "● UP" : "● DOWN"}
-                        </p>
+            <div class="metric-card">
+                <div class="metric-label">HEALTHY SERVICES</div>
+                <div class="metric-value" id="healthy-services" style="color:var(--green)">—</div>
+                <div class="metric-caption">Currently operational</div>
+            </div>
 
-                        <p class="response-time">
-                            Response Time:
-                            ${service.response_time_ms ?? "N/A"} ms
-                        </p>
-                    </div>
-                `).join("");
+            <div class="metric-card">
+                <div class="metric-label">ACTIVE INCIDENTS</div>
+                <div class="metric-value" id="active-incidents" style="color:var(--red)">—</div>
+                <div class="metric-caption">Services reporting DOWN</div>
+            </div>
 
-            } catch (error) {
-                dashboard.textContent = "Unable to load monitoring data.";
-            }
+            <div class="metric-card">
+                <div class="metric-label">AVG RESPONSE TIME</div>
+                <div class="metric-value" id="avg-response">—</div>
+                <div class="metric-caption">Latest health-check sample · ms</div>
+            </div>
+        </section>
+
+        <div class="section-heading">
+            <h2>Service Health Monitor</h2>
+            <div class="section-note" id="last-updated">Waiting for monitoring data...</div>
+        </div>
+
+        <section class="services" id="dashboard">
+            Loading service status...
+        </section>
+
+        <section class="workspace">
+
+            <div class="panel">
+                <h2>⚡ Incident Control Center</h2>
+                <p>
+                    Simulate independent or simultaneous healthcare service outages,
+                    investigate incidents using Amazon Bedrock AI, and restore
+                    simulated services after human authorization.
+                </p>
+
+                <div class="control-group">
+                    <h3 style="color:#91a3bf;font-size:12px;letter-spacing:1px">
+                        APPOINTMENT SERVICE
+                    </h3>
+                    <button class="btn-danger" onclick="performAction('/simulate/appointments/down')">
+                        ● Simulate Appointment Failure
+                    </button>
+                    <button class="btn-success" onclick="performAction('/simulate/appointments/up')">
+                        ✓ Restore Appointment Service
+                    </button>
+
+                    <h3 style="color:#91a3bf;font-size:12px;letter-spacing:1px">
+                        PHARMACY SERVICE
+                    </h3>
+                    <button class="btn-danger" onclick="performAction('/simulate/pharmacy/down')">
+                        ● Simulate Pharmacy Failure
+                    </button>
+                    <button class="btn-success" onclick="performAction('/simulate/pharmacy/up')">
+                        ✓ Restore Pharmacy Service
+                    </button>
+
+                    <h3 style="color:#91a3bf;font-size:12px;letter-spacing:1px">
+                        LABORATORY SERVICE
+                    </h3>
+                    <button class="btn-danger" onclick="performAction('/simulate/laboratory/down')">
+                        ● Simulate Laboratory Failure
+                    </button>
+                    <button class="btn-success" onclick="performAction('/simulate/laboratory/up')">
+                        ✓ Restore Laboratory Service
+                    </button>
+
+                    <h3 style="color:#91a3bf;font-size:12px;letter-spacing:1px">
+                        AI INCIDENT INVESTIGATION
+                    </h3>
+                    <button class="btn-ai" onclick="investigateIncident()">
+                        ✦ Investigate Active Incidents with AI
+                    </button>
+                </div>
+
+                <div class="action-message" id="action-message">
+                    Ready for incident simulation.
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="ai-header">
+                    <h2>✦ AI Incident Investigator</h2>
+                    <span class="ai-tag">AMAZON NOVA MICRO</span>
+                </div>
+
+                <p>
+                    AI-assisted analysis of monitoring evidence,
+                    possible causes, investigation steps, and
+                    human-approved remediation recommendations.
+                </p>
+
+                <div class="report-state" id="report-state">
+                    No investigation performed.
+                </div>
+
+                <div class="report" id="ai-report">
+                    Select "Investigate Incident with AI" to analyze an active service outage.
+                </div>
+            </div>
+
+        </section>
+
+        <div class="footer">
+            ClinicPulse · Healthcare Reliability & Monitoring · Powered by AWS and Amazon Bedrock
+        </div>
+
+    </main>
+</div>
+
+<script>
+const dashboard = document.getElementById("dashboard");
+const message = document.getElementById("action-message");
+const report = document.getElementById("ai-report");
+const reportState = document.getElementById("report-state");
+
+let previousInvestigation = false;
+let actionInProgress = false;
+
+function setBusy(busy) {
+    actionInProgress = busy;
+    document.querySelectorAll("button").forEach(button => {
+        button.disabled = busy;
+    });
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character]);
+}
+
+function formatReport(text) {
+    const lines = String(text).split("\n");
+    let html = "";
+    let listType = null;
+
+    function closeList() {
+        if (listType) {
+            html += `</${listType}>`;
+            listType = null;
+        }
+    }
+
+    function inlineFormat(value) {
+        return escapeHTML(value).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    }
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+            closeList();
+            continue;
         }
 
-        loadServices();
+        const heading = trimmed.match(/^#{1,4}\s+(.+)$/);
+        if (heading) {
+            closeList();
+            html += `<h3>${inlineFormat(heading[1])}</h3>`;
+            continue;
+        }
 
-        setInterval(loadServices, 10000);
-    </script>
+        const ordered = trimmed.match(/^\d+\.\s+(.+)$/);
+        const unordered = trimmed.match(/^[-*]\s+(.+)$/);
+
+        if (ordered || unordered) {
+            const type = ordered ? "ol" : "ul";
+
+            if (listType !== type) {
+                closeList();
+                html += `<${type}>`;
+                listType = type;
+            }
+
+            html += `<li>${inlineFormat((ordered || unordered)[1])}</li>`;
+            continue;
+        }
+
+        closeList();
+        html += `<p>${inlineFormat(trimmed)}</p>`;
+    }
+
+    closeList();
+    return html;
+}
+
+async function loadServices() {
+    try {
+        const response = await fetch("/api/status");
+
+        if (!response.ok) {
+            throw new Error("Monitoring API unavailable");
+        }
+
+        const services = await response.json();
+        const healthy = services.filter(service => service.status === "UP").length;
+        const incidents = services.length - healthy;
+
+        const responseTimes = services
+            .map(service => service.response_time_ms)
+            .filter(value => typeof value === "number");
+
+        const average = responseTimes.length
+            ? (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length).toFixed(1)
+            : "N/A";
+
+        document.getElementById("total-services").textContent = services.length;
+        document.getElementById("healthy-services").textContent = healthy;
+        document.getElementById("active-incidents").textContent = incidents;
+        document.getElementById("avg-response").textContent = average;
+
+        const badge = document.getElementById("live-badge");
+        badge.textContent = incidents > 0 ? "● INCIDENT DETECTED" : "● SYSTEM OPERATIONAL";
+        badge.style.color = incidents > 0 ? "var(--red)" : "var(--green)";
+
+        document.getElementById("last-updated").textContent =
+            `Last updated: ${new Date().toLocaleTimeString()}`;
+
+        dashboard.innerHTML = services.map(service => {
+            const up = service.status === "UP";
+
+            return `
+                <div class="service-card">
+                    <div class="service-top">
+                        <div class="service-name">${escapeHTML(service.service)}</div>
+                        <span class="status-pill ${up ? "up" : "down"}">
+                            ● ${up ? "UP" : "DOWN"}
+                        </span>
+                    </div>
+
+                    <div class="service-detail">
+                        <span>Response Time</span>
+                        <strong>
+                            ${service.response_time_ms === null
+                                ? "N/A"
+                                : escapeHTML(service.response_time_ms) + " ms"}
+                        </strong>
+                    </div>
+                </div>
+            `;
+        }).join("");
+
+        if (previousInvestigation && incidents === 0) {
+            reportState.textContent =
+                "Previous investigation · All monitored services currently healthy";
+        }
+
+    } catch (error) {
+        dashboard.textContent = "Unable to load monitoring data.";
+        document.getElementById("live-badge").textContent = "● MONITORING UNAVAILABLE";
+    }
+}
+
+async function authorizedRequest(endpoint) {
+    const token = prompt("Enter your ClinicPulse simulation token:");
+
+    if (token === null) {
+        return null;
+    }
+
+    if (!token.trim()) {
+        throw new Error("Authorization token is required.");
+    }
+
+    const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "X-Simulation-Token": token
+        }
+    });
+
+    let data;
+
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error("Server returned an invalid response.");
+    }
+
+    if (!response.ok) {
+        throw new Error(data.error || `Request failed: ${response.status}`);
+    }
+
+    return data;
+}
+
+async function performAction(endpoint) {
+    if (actionInProgress) return;
+
+    setBusy(true);
+    message.textContent = "Processing request...";
+
+    try {
+        const data = await authorizedRequest(endpoint);
+
+        if (data === null) {
+            message.textContent = "Action cancelled.";
+            return;
+        }
+
+        message.textContent = data.message || "Action completed.";
+        await loadServices();
+
+        if (endpoint.endsWith("/up") && previousInvestigation) {
+            reportState.textContent =
+                "Previous investigation · Recovery requested and monitoring refreshed";
+        }
+
+    } catch (error) {
+        message.textContent = `Error: ${error.message}`;
+    } finally {
+        setBusy(false);
+    }
+}
+
+async function investigateIncident() {
+    if (actionInProgress) return;
+
+    setBusy(true);
+    message.textContent = "Requesting AI investigation...";
+    report.textContent = "Amazon Bedrock is analyzing the incident...";
+    reportState.textContent = "Investigation in progress";
+
+    try {
+        const data = await authorizedRequest("/api/investigate");
+
+        if (data === null) {
+            message.textContent = "Investigation cancelled.";
+            report.textContent = "No investigation performed.";
+            reportState.textContent = "Investigation cancelled";
+            return;
+        }
+
+        if (!data.investigations || data.investigations.length === 0) {
+            report.textContent = data.message || "No active incidents detected.";
+            reportState.textContent = "No active incidents";
+            message.textContent = "Investigation completed.";
+            previousInvestigation = false;
+            return;
+        }
+
+        report.innerHTML = data.investigations.map(incident => `
+            <h3>${escapeHTML(incident.service)} — ${escapeHTML(incident.status)}</h3>
+            ${formatReport(incident.ai_report)}
+        `).join("<hr>");
+
+        previousInvestigation = true;
+        reportState.textContent =
+            `${data.incident_count} incident(s) investigated · AI recommendations require human approval`;
+
+        message.textContent =
+            `AI investigation completed for ${data.incident_count} incident(s).`;
+
+    } catch (error) {
+        report.textContent = `Investigation failed: ${error.message}`;
+        reportState.textContent = "Investigation failed";
+        message.textContent = "AI investigation unsuccessful.";
+    } finally {
+        setBusy(false);
+    }
+}
+
+loadServices();
+setInterval(loadServices, 10000);
+</script>
 
 </body>
 </html>

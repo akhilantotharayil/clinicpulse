@@ -8,12 +8,29 @@ import hmac
 
 app = Flask(__name__, template_folder="../templates")
 
-# Shared simulation state across Gunicorn workers
-PHARMACY_STATE_FILE = "/tmp/clinicpulse_pharmacy_down"
+# Demo-only simulation state shared by Gunicorn workers
+# within the same container.
+SERVICE_STATE_FILES = {
+    "appointments": "/tmp/clinicpulse_appointments_down",
+    "pharmacy": "/tmp/clinicpulse_pharmacy_down",
+    "laboratory": "/tmp/clinicpulse_laboratory_down",
+}
+
+SERVICE_NAMES = {
+    "appointments": "Appointment Service",
+    "pharmacy": "Pharmacy Service",
+    "laboratory": "Laboratory Service",
+}
+
+SERVICE_DELAYS = {
+    "appointments": 0.2,
+    "pharmacy": 0.3,
+    "laboratory": 0.4,
+}
 
 
-def pharmacy_is_down():
-    return os.path.exists(PHARMACY_STATE_FILE)
+def service_is_down(service):
+    return os.path.exists(SERVICE_STATE_FILES[service])
 
 
 def simulation_authorized():
@@ -39,39 +56,22 @@ def health():
     })
 
 
-@app.route("/services/appointments")
-def appointments():
-    time.sleep(0.2)
+@app.route("/services/<service>")
+def service_health(service):
+    if service not in SERVICE_STATE_FILES:
+        return jsonify({"error": "Unknown service"}), 404
 
-    return jsonify({
-        "service": "Appointment Service",
-        "status": "UP"
-    })
+    time.sleep(SERVICE_DELAYS[service])
 
-
-@app.route("/services/pharmacy")
-def pharmacy():
-    time.sleep(0.3)
-
-    if pharmacy_is_down():
+    if service_is_down(service):
         return jsonify({
-            "service": "Pharmacy Service",
+            "service": SERVICE_NAMES[service],
             "status": "DOWN",
             "message": "Simulated service outage"
         }), 503
 
     return jsonify({
-        "service": "Pharmacy Service",
-        "status": "UP"
-    })
-
-
-@app.route("/services/laboratory")
-def laboratory():
-    time.sleep(0.4)
-
-    return jsonify({
-        "service": "Laboratory Service",
+        "service": SERVICE_NAMES[service],
         "status": "UP"
     })
 
@@ -81,29 +81,32 @@ def service_status():
     return jsonify(check_services())
 
 
-@app.route("/simulate/pharmacy/down", methods=["POST"])
-def simulate_pharmacy_down():
+@app.route("/simulate/<service>/<action>", methods=["POST"])
+def simulate_service(service, action):
     if not simulation_authorized():
         return jsonify({"error": "Forbidden"}), 403
 
-    with open(PHARMACY_STATE_FILE, "w"):
-        pass
+    if service not in SERVICE_STATE_FILES:
+        return jsonify({"error": "Unknown service"}), 404
+
+    if action not in ("down", "up"):
+        return jsonify({"error": "Unknown simulation action"}), 404
+
+    state_file = SERVICE_STATE_FILES[service]
+
+    if action == "down":
+        with open(state_file, "w"):
+            pass
+
+        return jsonify({
+            "message": f"{SERVICE_NAMES[service]} failure simulation activated"
+        })
+
+    if os.path.exists(state_file):
+        os.remove(state_file)
 
     return jsonify({
-        "message": "Pharmacy failure simulation activated"
-    })
-
-
-@app.route("/simulate/pharmacy/up", methods=["POST"])
-def simulate_pharmacy_up():
-    if not simulation_authorized():
-        return jsonify({"error": "Forbidden"}), 403
-
-    if os.path.exists(PHARMACY_STATE_FILE):
-        os.remove(PHARMACY_STATE_FILE)
-
-    return jsonify({
-        "message": "Pharmacy service restored"
+        "message": f"{SERVICE_NAMES[service]} restored"
     })
 
 
