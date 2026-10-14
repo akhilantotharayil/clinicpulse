@@ -15,6 +15,7 @@ WORKDIR /app
 
 COPY --from=builder /install /usr/local
 
+RUN python -m pip uninstall -y pip
 COPY app/ ./app/
 COPY templates/ ./templates/
 COPY static/ ./static/
