@@ -3,7 +3,7 @@ set -eu
 
 echo "Starting ClinicPulse application..."
 
-gunicorn --bind 0.0.0.0:8000 --workers 1 --threads 4 app.main:app &
+gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 4 app.main:app &
 APP_PID=$!
 
 cleanup() {

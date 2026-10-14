@@ -1,12 +1,20 @@
 from flask import Flask, jsonify, render_template, request
 from app.monitor import check_services
+from app.ai_investigator import investigate_incident
+
 import time
 import os
 import hmac
 
 app = Flask(__name__, template_folder="../templates")
 
-pharmacy_failure = False
+# Shared simulation state across Gunicorn workers
+PHARMACY_STATE_FILE = "/tmp/clinicpulse_pharmacy_down"
+
+
+def pharmacy_is_down():
+    return os.path.exists(PHARMACY_STATE_FILE)
+
 
 def simulation_authorized():
     expected_token = os.environ.get("SIMULATION_TOKEN")
@@ -40,11 +48,12 @@ def appointments():
         "status": "UP"
     })
 
+
 @app.route("/services/pharmacy")
 def pharmacy():
     time.sleep(0.3)
 
-    if pharmacy_failure:
+    if pharmacy_is_down():
         return jsonify({
             "service": "Pharmacy Service",
             "status": "DOWN",
@@ -66,6 +75,7 @@ def laboratory():
         "status": "UP"
     })
 
+
 @app.route("/api/status")
 def service_status():
     return jsonify(check_services())
@@ -73,12 +83,11 @@ def service_status():
 
 @app.route("/simulate/pharmacy/down", methods=["POST"])
 def simulate_pharmacy_down():
-    global pharmacy_failure
-
     if not simulation_authorized():
         return jsonify({"error": "Forbidden"}), 403
 
-    pharmacy_failure = True
+    with open(PHARMACY_STATE_FILE, "w"):
+        pass
 
     return jsonify({
         "message": "Pharmacy failure simulation activated"
@@ -87,16 +96,62 @@ def simulate_pharmacy_down():
 
 @app.route("/simulate/pharmacy/up", methods=["POST"])
 def simulate_pharmacy_up():
-    global pharmacy_failure
-
     if not simulation_authorized():
         return jsonify({"error": "Forbidden"}), 403
 
-    pharmacy_failure = False
+    if os.path.exists(PHARMACY_STATE_FILE):
+        os.remove(PHARMACY_STATE_FILE)
 
     return jsonify({
         "message": "Pharmacy service restored"
     })
+
+
+@app.route("/api/investigate", methods=["POST"])
+def investigate():
+    if not simulation_authorized():
+        return jsonify({"error": "Forbidden"}), 403
+
+    services = check_services()
+
+    failed_services = [
+        service for service in services
+        if service["status"] == "DOWN"
+    ]
+
+    if not failed_services:
+        return jsonify({
+            "message": "All services are healthy. No incident detected."
+        })
+
+    investigations = []
+
+    for service in failed_services:
+        try:
+            report = investigate_incident(
+                service_name=service["service"],
+                status=service["status"],
+                response_time_ms=service["response_time_ms"]
+            )
+
+            investigations.append({
+                "service": service["service"],
+                "status": service["status"],
+                "ai_report": report
+            })
+
+        except Exception:
+            app.logger.exception("AI investigation failed")
+
+            return jsonify({
+                "error": "AI investigation temporarily unavailable"
+            }), 503
+
+    return jsonify({
+        "incident_count": len(investigations),
+        "investigations": investigations
+    })
+
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
