@@ -72,3 +72,15 @@ ClinicPulse uses GitHub Actions for CI/CD, Docker for containerization, and AWS 
 The application integrates Amazon CloudWatch for monitoring, Amazon SNS for notifications, and Amazon Bedrock Nova Micro for AI-assisted incident investigation.
 
 📐 **[View the Complete AWS Architecture Diagram](docs/architecture.md)**
+
+
+## 🚀 Deployment Guides
+
+Want to deploy ClinicPulse yourself?
+
+Follow these beginner-friendly guides:
+
+- 🐳 [Local Deployment Using Docker](docs/local-deployment.md)
+- ☁️ [AWS Elastic Beanstalk Deployment — Manual & CI/CD](docs/aws-deployment.md)
+
+The guides explain how to deploy ClinicPulse using your own environment and AWS account.
