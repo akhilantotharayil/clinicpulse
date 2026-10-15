@@ -15,6 +15,33 @@ The project demonstrates how DevOps practices, AWS cloud services, and generativ
 - **Automated CI/CD:** Test, build, scan, and deploy through GitHub Actions.
 - **AWS Monitoring:** Integrate Amazon CloudWatch metrics, alarms, and Amazon SNS notifications.
 
+## 📸 ClinicPulse Screenshots
+
+### 🟢 Live Healthcare Monitoring Dashboard
+
+Monitor Appointment, Pharmacy, and Laboratory service health in real time.
+
+![ClinicPulse Healthy Dashboard](docs/screenshots/dashboard-healthy.png)
+
+### 🔴 Incident Simulation
+
+Simulate service outages and observe how ClinicPulse displays unhealthy services.
+
+![ClinicPulse Incident Simulation](docs/screenshots/dashboard-incident.png)
+
+### 🤖 AI-Assisted Incident Investigation
+
+Amazon Bedrock Nova Micro analyzes service status and response-time information to suggest possible causes and troubleshooting steps.
+
+![ClinicPulse AI Investigation](docs/screenshots/ai-investigation.png)
+
+### ⚙️ Automated DevOps CI/CD Pipeline
+
+GitHub Actions automates testing, Docker builds, security scanning, image publishing, and AWS Elastic Beanstalk deployment.
+
+![ClinicPulse GitHub Actions Pipeline](docs/screenshots/github-actions.png)
+
+
 ## 🛠️ Technology Stack
 
 | Component | Technology |
